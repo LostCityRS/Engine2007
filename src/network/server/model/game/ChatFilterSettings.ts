@@ -14,6 +14,7 @@ export default class ChatFilterSettings extends GameServerMessage {
     // stones before they visually update after sending this packet
     constructor(
         readonly publicChatFilter: number,
+        readonly privateChatFilter: number,
         readonly tradeChatFilter: number
     ) {
         super();

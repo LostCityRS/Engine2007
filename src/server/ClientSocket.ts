@@ -1,4 +1,5 @@
 import type NetworkPlayer from '#/engine/NetworkPlayer.ts';
+import type Isaac from '#/io/Isaac.ts';
 import type Packet from '#/io/Packet.ts';
 
 export default abstract class ClientSocket {
@@ -12,6 +13,8 @@ export default abstract class ClientSocket {
     // todo: generic enough to keep here, but maybe still move to other classes
     packetType: number = -1;
     packetSize: number = 0;
+    inCipher: Isaac | null = null;
+    outCipher: Isaac | null = null;
 
     // todo: move to other classes
     userLimit: number = 0;

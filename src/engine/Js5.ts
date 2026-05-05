@@ -1,7 +1,7 @@
 import Packet from '#/io/Packet.ts';
 import OpenRs2 from '#/util/OpenRs2.ts';
-import Js5ClientRepository from '#/network/os1/client/prot/js5/Js5ClientRepository.ts';
-import Js5ServerRepository from '#/network/os1/server/prot/Js5ServerRepository.ts';
+import Js5ClientRepository from '#/network/client/prot/js5/Js5ClientRepository.ts';
+import Js5ServerRepository from '#/network/server/prot/Js5ServerRepository.ts';
 import Js5GroupResponse from '#/network/server/model/js5/Js5GroupResponse.ts';
 import type ClientSocket from '#/server/ClientSocket.ts';
 
@@ -12,7 +12,7 @@ type Js5Request = {
 }
 
 class Js5 {
-    static cache = OpenRs2.OSRS_1;
+    static cache = OpenRs2.RS2_500;
 
     static serverRepo = new Js5ServerRepository();
     static clientRepo = new Js5ClientRepository();

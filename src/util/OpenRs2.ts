@@ -4,6 +4,8 @@ import { pipeline } from 'stream/promises';
 import axios from 'axios';
 import * as tar from 'tar';
 
+import Js5Index from '#/js5/Js5Index.ts';
+
 type OpenRs2Xtea = {
     archive: number;
     group: number;
@@ -14,10 +16,11 @@ type OpenRs2Xtea = {
 };
 
 export default class OpenRs2 {
-    static OSRS_1 = new OpenRs2(241);
+    static RS2_500 = new OpenRs2(726);
 
     id: number;
     keys: OpenRs2Xtea[] = [];
+    mapIndex: Js5Index | null = null;
 
     constructor(id: number) {
         this.id = id;
@@ -101,14 +104,71 @@ export default class OpenRs2 {
         }
     }
 
-    getKey(x: number, z: number) {
-        const id = x << 8 | z;
+    async loadMapIndex() {
+        const index = await this.getGroup(255, 5);
+        if (!index) {
+            return;
+        }
 
-        const entry = this.keys.find(k => k.mapsquare === id);
+        this.mapIndex = new Js5Index(false, false);
+        this.mapIndex.decode(index);
+    }
+
+    getKey(x: number, z: number) {
+        const entry = this.getKeyEntry(x, z);
         if (!entry) {
             return [0, 0, 0, 0];
         } else {
             return entry.key;
         }
+    }
+
+    getKeyEntry(x: number, z: number) {
+        const id = x << 8 | z;
+
+        return this.keys.find(k => k.mapsquare === id);
+    }
+
+    hasKey(x: number, z: number) {
+        return typeof this.getKeyEntry(x, z) !== 'undefined';
+    }
+
+    getMapGroupId(prefix: 'm' | 'l', x: number, z: number) {
+        return this.mapIndex?.getGroupId(`${prefix}${x}_${z}`) ?? -1;
+    }
+
+    canLoadLocGroupWithoutKey(x: number, z: number) {
+        const group = this.getMapGroupId('l', x, z);
+        if (group === -1 || this.hasKey(x, z)) {
+            return true;
+        }
+
+        const file = `data/cache/5/${group}.dat`;
+        if (!fs.existsSync(file)) {
+            return false;
+        }
+
+        try {
+            Js5Index.decompress(Uint8Array.from(fs.readFileSync(file)));
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    getMissingKeysForRebuild(absX: number, absZ: number) {
+        const zx = absX >> 3;
+        const zz = absZ >> 3;
+
+        const missing: { x: number, z: number, mapsquare: number }[] = [];
+        for (let mx = (zx - 6) >> 3; mx <= (zx + 6) >> 3; mx++) {
+            for (let mz = (zz - 6) >> 3; mz <= (zz + 6) >> 3; mz++) {
+                if (!this.canLoadLocGroupWithoutKey(mx, mz)) {
+                    missing.push({ x: mx, z: mz, mapsquare: mx << 8 | mz });
+                }
+            }
+        }
+
+        return missing;
     }
 }

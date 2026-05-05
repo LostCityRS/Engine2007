@@ -4,8 +4,8 @@ import Player from '#/engine/Player.ts';
 
 import type ClientSocket from '#/server/ClientSocket.ts';
 
-import GameServerRepository from '#/network/os1/server/prot/GameServerRepository.ts';
-import GameClientRepository from '#/network/os1/client/prot/game/GameClientRepository.ts';
+import GameServerRepository from '#/network/server/prot/GameServerRepository.ts';
+import GameClientRepository from '#/network/client/prot/game/GameClientRepository.ts';
 import GameClientLimit from '#/network/client/codec/game/GameClientLimit.ts';
 import GameMessageDecoder from '#/network/client/codec/game/GameMessageDecoder.ts';
 import type GameServerMessage from '#/network/server/GameServerMessage.ts';
@@ -40,7 +40,7 @@ export default class NetworkPlayer extends Player {
             available -= 1;
 
             NetworkPlayer.in.pos = 0;
-            this.client.packetType = NetworkPlayer.in.g1(); // todo: isaac
+            this.client.packetType = (NetworkPlayer.in.g1() - (this.client.inCipher?.nextByte() ?? 0)) & 0xFF;
 
             const decoder = NetworkPlayer.clientRepo.getDecoder(this.client.packetType);
             if (typeof decoder === 'undefined') {
@@ -124,7 +124,7 @@ export default class NetworkPlayer extends Player {
                 throw new Error(`Cannot write ${message.constructor.name} message`);
             }
 
-            buf.p1(encoder.opcode); // todo: isaac
+            buf.p1((encoder.opcode + (this.client.outCipher?.nextByte() ?? 0)) & 0xFF);
             if (encoder.size === -1) {
                 buf.p1(0);
             } else if (encoder.size === -2) {

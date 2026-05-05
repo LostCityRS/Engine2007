@@ -3,6 +3,14 @@ import GZip from '#/io/GZip.ts';
 import BZip2 from '#/io/BZip2.ts';
 
 export default class Js5Index {
+    static hashName(name: string) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = (name.toLowerCase().charCodeAt(i) + ((hash << 5) - hash)) | 0;
+        }
+        return hash;
+    }
+
     static decompress(src: Uint8Array) {
         const buf = new Packet(src);
 
@@ -191,6 +199,15 @@ export default class Js5Index {
                 }
             }
         }
+    }
+
+    isGroupValid(group: number) {
+        return group >= 0 && group < this.capacity && this.groupSize[group] > 0;
+    }
+
+    getGroupId(name: string) {
+        const group = this.groupNameHashTable.get(Js5Index.hashName(name));
+        return typeof group !== 'undefined' && this.isGroupValid(group) ? group : -1;
     }
 
     unpackGroup(group: number, key: number[] = []) {
